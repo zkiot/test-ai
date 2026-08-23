@@ -1,0 +1,27 @@
+
+Redis 故障处理手册
+
+1. Redis 内存不足
+症状：OOM command not allowed、写入失败
+处理步骤：
+  1) 执行 INFO memory 查看内存使用情况
+  2) 执行 MEMORY DOCTOR 获取诊断建议
+  3) 调整 maxmemory-policy 为 allkeys-lru
+  4) 扩容：修改 maxmemory 配置
+预防措施：设置合理的 TTL，定期清理无用 key
+
+2. Redis 主从同步延迟
+症状：主从数据不一致、replica_lag 持续增大
+处理步骤：
+  1) 执行 INFO replication 查看同步状态
+  2) 检查网络带宽是否拥塞
+  3) 必要时重新全量同步
+预防措施：监控 replication_backlog
+
+3. Redis 连接数耗尽
+症状：ERR max number of clients reached
+处理步骤：
+  1) 执行 INFO clients 查看当前连接数
+  2) 执行 CLIENT LIST 找到异常连接
+  3) 修改 maxclients 配置
+预防措施：使用连接池，设置合理超时

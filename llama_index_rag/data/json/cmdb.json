@@ -1,0 +1,38 @@
+[
+  {
+    "ip": "192.168.1.100",
+    "hostname": "prod-web-01",
+    "owner": "张三",
+    "team": "电商业务组",
+    "business": "订单系统",
+    "env": "生产环境",
+    "idc": "上海机房A区",
+    "spec": "8核16G",
+    "os": "CentOS 7.9",
+    "status": "正常"
+  },
+  {
+    "ip": "192.168.1.101",
+    "hostname": "prod-db-01",
+    "owner": "李四",
+    "team": "数据库组",
+    "business": "用户数据库",
+    "env": "生产环境",
+    "idc": "上海机房B区",
+    "spec": "16核32G",
+    "os": "CentOS 7.9",
+    "status": "正常"
+  },
+  {
+    "ip": "192.168.1.102",
+    "hostname": "prod-cache-01",
+    "owner": "王五",
+    "team": "中间件组",
+    "business": "Redis缓存集群",
+    "env": "生产环境",
+    "idc": "上海机房A区",
+    "spec": "4核8G",
+    "os": "Ubuntu 20.04",
+    "status": "告警"
+  }
+]

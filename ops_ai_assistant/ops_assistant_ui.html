@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能运维助手</title>
+
+  <!-- Element Plus -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/index.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/index.full.min.js"></script>
+
+  <style>
+    /* ── 设计令牌 ─────────────────────────────────────────────── */
+    :root {
+      --bg-base:      #0d1117;
+      --bg-panel:     #161b22;
+      --bg-card:      #1c2128;
+      --bg-input:     #21262d;
+      --border:       #30363d;
+      --border-light: #21262d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted:   #484f58;
+      --accent:       #00b4d8;
+      --accent-dim:   rgba(0, 180, 216, 0.12);
+      --accent-glow:  rgba(0, 180, 216, 0.25);
+      --green:        #3fb950;
+      --red:          #f85149;
+      --yellow:       #d29922;
+      --radius:       8px;
+      --radius-lg:    12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'SF Pro Text', 'PingFang SC', 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── 布局 ────────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr 280px;
+      grid-template-rows: 52px 1fr;
+      height: 100vh;
+    }
+
+    /* ── 顶栏 ────────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    .topbar-divider {
+      width: 1px; height: 20px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .status-dot.ok     { background: var(--green); }
+    .status-dot.error  { background: var(--red); }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .stat-chip {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    /* ── 左侧边栏 ────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-section {
+      padding: 16px 12px 8px;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 180, 216, 0.3);
+      color: var(--accent);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+      margin-bottom: 12px;
+    }
+    .new-chat-btn:hover {
+      background: rgba(0, 180, 216, 0.2);
+      border-color: rgba(0, 180, 216, 0.5);
+    }
+
+    .session-list { overflow-y: auto; flex: 1; padding: 0 12px 12px; }
+
+    .session-item {
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.1s;
+      margin-bottom: 2px;
+    }
+    .session-item:hover   { background: var(--bg-card); }
+    .session-item.active  {
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 180, 216, 0.25);
+    }
+
+    .session-icon { font-size: 14px; flex-shrink: 0; }
+
+    .session-info { flex: 1; min-width: 0; }
+    .session-name {
+      font-size: 13px; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .session-time { font-size: 11px; color: var(--text-muted); }
+
+    /* ── 快捷工具区 ─────────────────────────────────────────── */
+    .quick-tools {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .tool-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: var(--radius);
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.1s;
+      margin-bottom: 6px;
+      text-align: left;
+    }
+    .tool-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── 主聊天区 ────────────────────────────────────────────── */
+    .chat-area {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--border); border-radius: 2px;
+    }
+
+    /* ── 消息气泡 ────────────────────────────────────────────── */
+    .msg-row {
+      display: flex; gap: 10px;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user   { flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .msg-avatar.ai   { background: var(--accent-dim); border: 1px solid rgba(0,180,216,0.3); }
+    .msg-avatar.user { background: var(--bg-card); border: 1px solid var(--border); }
+
+    .msg-body { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+    .msg-row.user .msg-body { align-items: flex-end; }
+
+    .msg-meta {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; gap: 6px; align-items: center;
+    }
+
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: var(--radius-lg);
+      font-size: 13.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg-row.ai .msg-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    .msg-row.user .msg-bubble {
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 180, 216, 0.3);
+      border-top-right-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    /* 工具调用标签 */
+    .tool-tags {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-top: 6px;
+    }
+    .tool-tag {
+      font-size: 11px;
+      background: rgba(0,180,216,0.08);
+      border: 1px solid rgba(0,180,216,0.2);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+
+    /* 加载动画 */
+    .typing-indicator {
+      display: flex; gap: 4px; align-items: center;
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      border-top-left-radius: 4px;
+      width: fit-content;
+    }
+    .typing-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: typing 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* 欢迎屏 */
+    .welcome {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 24px;
+      padding: 40px;
+    }
+    .welcome-icon { font-size: 48px; }
+    .welcome-title {
+      font-size: 22px; font-weight: 600;
+      color: var(--text-primary); text-align: center;
+    }
+    .welcome-sub {
+      font-size: 13px; color: var(--text-secondary); text-align: center;
+      max-width: 380px; line-height: 1.7;
+    }
+    .welcome-suggestions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      width: 100%; max-width: 460px;
+    }
+    .suggestion-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .suggestion-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .suggestion-btn .s-icon { font-size: 16px; margin-bottom: 4px; }
+    .suggestion-btn .s-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+    /* ── 输入区 ──────────────────────────────────────────────── */
+    .input-area {
+      padding: 12px 20px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .input-wrapper {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .input-textarea {
+      width: 100%;
+      background: transparent;
+      border: none; outline: none;
+      color: var(--text-primary);
+      font-size: 13.5px;
+      padding: 12px 14px 4px;
+      resize: none;
+      font-family: inherit;
+      min-height: 44px; max-height: 140px;
+    }
+    .input-textarea::placeholder { color: var(--text-muted); }
+
+    .input-toolbar {
+      display: flex; align-items: center;
+      padding: 6px 10px;
+      gap: 6px;
+    }
+
+    .input-hint { font-size: 11px; color: var(--text-muted); margin-right: auto; }
+
+    .send-btn {
+      background: var(--accent);
+      border: none; border-radius: 6px;
+      color: #000; font-weight: 600;
+      font-size: 12px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: opacity 0.15s;
+    }
+    .send-btn:hover   { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── 右侧面板 ────────────────────────────────────────────── */
+    .right-panel {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-tab {
+      flex: 1; padding: 12px 8px;
+      text-align: center;
+      font-size: 12px; cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .panel-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
+    .panel-content::-webkit-scrollbar { width: 3px; }
+    .panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* 服务器卡片 */
+    .server-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .server-card:hover { border-color: var(--accent); }
+
+    .server-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .server-ip { font-size: 13px; font-weight: 500; font-family: 'SF Mono', monospace; }
+
+    .server-status {
+      font-size: 11px; padding: 2px 7px;
+      border-radius: 10px; font-weight: 500;
+    }
+    .server-status.ok     { background: rgba(63,185,80,0.15); color: var(--green); }
+    .server-status.alert  { background: rgba(248,81,73,0.15); color: var(--red); }
+
+    .server-metrics { display: flex; flex-direction: column; gap: 6px; }
+
+    .metric-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text-secondary);
+    }
+    .metric-label { width: 36px; flex-shrink: 0; }
+    .metric-bar {
+      flex: 1; height: 4px;
+      background: var(--bg-input);
+      border-radius: 2px; overflow: hidden;
+    }
+    .metric-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .metric-value { width: 30px; text-align: right; }
+
+    .fill-green  { background: var(--green); }
+    .fill-yellow { background: var(--yellow); }
+    .fill-red    { background: var(--red); }
+
+    /* 工单列表 */
+    .ticket-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .ticket-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .ticket-id { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+
+    .severity-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .sev-p0, .sev-p1 { background: rgba(248,81,73,0.15); color: var(--red); }
+    .sev-p2           { background: rgba(210,153,34,0.15); color: var(--yellow); }
+    .sev-p3           { background: rgba(63,185,80,0.15);  color: var(--green); }
+
+    .ticket-title { font-size: 12px; color: var(--text-primary); margin-bottom: 4px; }
+    .ticket-meta  { font-size: 11px; color: var(--text-muted); }
+
+    /* Element Plus 覆盖 */
+    .el-scrollbar { height: 100%; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <div class="layout">
+
+    <!-- ── 顶栏 ─────────────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar-logo">
+        <div class="logo-dot"></div>
+        智能运维助手
+      </div>
+      <div class="topbar-divider"></div>
+      <div class="status-badge">
+        <div class="status-dot" :class="apiStatus === 'ok' ? 'ok' : 'error'"></div>
+        {{ apiStatus === 'ok' ? 'API 正常' : 'API 离线' }}
+      </div>
+      <div class="topbar-right">
+        <span class="stat-chip">会话 {{ sessions.length }}</span>
+        <span class="stat-chip">请求 {{ totalRequests }}</span>
+        <el-button size="small" @click="checkHealth" :loading="checking">
+          刷新状态
+        </el-button>
+      </div>
+    </header>
+
+    <!-- ── 左侧边栏 ──────────────────────────────────────── -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <button class="new-chat-btn" @click="newSession">
+          <span>＋</span> 新建会话
+        </button>
+        <div class="sidebar-label">历史会话</div>
+      </div>
+
+      <div class="session-list">
+        <div
+          v-for="s in sessions"
+          :key="s.id"
+          class="session-item"
+          :class="{ active: currentSessionId === s.id }"
+          @click="switchSession(s.id)"
+        >
+          <span class="session-icon">💬</span>
+          <div class="session-info">
+            <div class="session-name">{{ s.name }}</div>
+            <div class="session-time">{{ s.time }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-tools">
+        <div class="sidebar-label">快捷查询</div>
+        <button class="tool-btn"
+          v-for="t in quickTools" :key="t.label"
+          @click="sendQuick(t.prompt)">
+          <span>{{ t.icon }}</span>{{ t.label }}
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── 主聊天区 ─────────────────────────────────────── -->
+    <main class="chat-area">
+
+      <!-- 欢迎屏 -->
+      <div v-if="currentMessages.length === 0" class="welcome">
+        <div class="welcome-icon">🤖</div>
+        <div class="welcome-title">智能运维助手</div>
+        <div class="welcome-sub">
+          基于 LangChain + LlamaIndex 构建，支持故障排查、资产查询、工单创建等运维场景
+        </div>
+        <div class="welcome-suggestions">
+          <button
+            v-for="s in suggestions" :key="s.text"
+            class="suggestion-btn"
+            @click="sendQuick(s.text)"
+          >
+            <div class="s-icon">{{ s.icon }}</div>
+            <div class="s-text">{{ s.text }}</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 消息列表 -->
+      <div v-else class="chat-messages" ref="msgContainer">
+        <div
+          v-for="(msg, i) in currentMessages"
+          :key="i"
+          class="msg-row"
+          :class="msg.role"
+        >
+          <div class="msg-avatar" :class="msg.role">
+            {{ msg.role === 'ai' ? '🤖' : '👤' }}
+          </div>
+          <div class="msg-body">
+            <div class="msg-meta">
+              <span>{{ msg.role === 'ai' ? '运维助手' : '你' }}</span>
+              <span>{{ msg.time }}</span>
+              <span v-if="msg.elapsed">{{ msg.elapsed }}ms</span>
+            </div>
+            <div class="msg-bubble">{{ msg.content }}</div>
+            <div v-if="msg.tools && msg.tools.length" class="tool-tags">
+              <span v-for="t in msg.tools" :key="t" class="tool-tag">
+                🔧 {{ t }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 打字动画 -->
+        <div v-if="loading" class="msg-row ai">
+          <div class="msg-avatar ai">🤖</div>
+          <div class="msg-body">
+            <div class="msg-meta"><span>运维助手</span></div>
+            <div class="typing-indicator">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区 -->
+      <div class="input-area">
+        <div class="input-wrapper">
+          <textarea
+            class="input-textarea"
+            v-model="inputText"
+            :placeholder="'向运维助手提问，例如：192.168.1.100 CPU 告警了怎么处理？'"
+            @keydown.enter.exact.prevent="sendMessage"
+            @input="autoResize"
+            ref="inputEl"
+            rows="1"
+          ></textarea>
+          <div class="input-toolbar">
+            <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
+            <el-button size="small" text @click="clearSession">清空</el-button>
+            <button
+              class="send-btn"
+              @click="sendMessage"
+              :disabled="!inputText.trim() || loading"
+            >
+              发送 ↑
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ── 右侧面板 ─────────────────────────────────────── -->
+    <aside class="right-panel">
+      <div class="panel-tabs">
+        <div
+          v-for="tab in ['服务器', '工单', '统计']"
+          :key="tab"
+          class="panel-tab"
+          :class="{ active: activeTab === tab }"
+          @click="activeTab = tab; tab === '服务器' ? loadServers() : tab === '工单' ? loadTickets() : loadStats()"
+        >{{ tab }}</div>
+      </div>
+
+      <div class="panel-content">
+
+        <!-- 服务器 Tab -->
+        <template v-if="activeTab === '服务器'">
+          <div v-for="s in servers" :key="s.ip" class="server-card"
+            @click="sendQuick(`查询服务器 ${s.ip} 的详情和处理建议`)">
+            <div class="server-header">
+              <span class="server-ip">{{ s.ip }}</span>
+              <span class="server-status" :class="s.cpu > 85 || s.memory > 80 ? 'alert' : 'ok'">
+                {{ s.cpu > 85 || s.memory > 80 ? '告警' : '正常' }}
+              </span>
+            </div>
+            <div class="server-metrics">
+              <div class="metric-row">
+                <span class="metric-label">CPU</span>
+                <div class="metric-bar">
+                  <div class="metric-fill"
+                    :class="s.cpu > 90 ? 'fill-red' : s.cpu > 75 ? 'fill-yellow' : 'fill-green'"
+                    :style="{width: s.cpu + '%'}">
+                  </div>
+                </div>
+                <span class="metric-value">{{ s.cpu }}%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">内存</span>
+                <div class="metric-bar">
+                  <div class="metric-fill"
+                    :class="s.memory > 85 ? 'fill-red' : s.memory > 70 ? 'fill-yellow' : 'fill-green'"
+                    :style="{width: s.memory + '%'}">
+                  </div>
+                </div>
+                <span class="metric-value">{{ s.memory }}%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">磁盘</span>
+                <div class="metric-bar">
+                  <div class="metric-fill"
+                    :class="s.disk > 80 ? 'fill-red' : s.disk > 65 ? 'fill-yellow' : 'fill-green'"
+                    :style="{width: s.disk + '%'}">
+                  </div>
+                </div>
+                <span class="metric-value">{{ s.disk }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <el-button size="small" style="width:100%;margin-top:4px"
+            @click="loadServers" :loading="loadingServers">
+            刷新状态
+          </el-button>
+        </template>
+
+        <!-- 工单 Tab -->
+        <template v-else-if="activeTab === '工单'">
+          <div v-if="tickets.length === 0" style="text-align:center;color:var(--text-muted);padding:40px 0;font-size:13px">
+            暂无工单
+          </div>
+          <div v-for="t in tickets" :key="t.id" class="ticket-item">
+            <div class="ticket-header">
+              <span class="ticket-id">{{ t.id }}</span>
+              <span class="severity-tag" :class="'sev-' + t.severity.toLowerCase()">
+                {{ t.severity }}
+              </span>
+            </div>
+            <div class="ticket-title">{{ t.title }}</div>
+            <div class="ticket-meta">{{ t.server_ip }} · {{ t.status }} · {{ t.created_at }}</div>
+          </div>
+
+          <el-button size="small" style="width:100%;margin-top:4px"
+            @click="loadTickets">刷新工单</el-button>
+        </template>
+
+        <!-- 统计 Tab -->
+        <template v-else-if="activeTab === '统计'">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div v-for="item in statsItems" :key="item.label"
+              style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">{{ item.label }}</div>
+              <div style="font-size:20px;font-weight:600;color:var(--accent)">{{ item.value }}</div>
+            </div>
+          </div>
+        </template>
+
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+const { createApp, ref, computed, nextTick, onMounted } = Vue
+
+// ── API 地址（改成你的 FastAPI 地址）─────────────────────
+const API_BASE = 'http://localhost:8000'
+
+createApp({
+  setup() {
+
+    // ── 状态 ────────────────────────────────────────────
+    const apiStatus    = ref('checking')
+    const checking     = ref(false)
+    const loading      = ref(false)
+    const loadingServers = ref(false)
+    const inputText    = ref('')
+    const msgContainer = ref(null)
+    const inputEl      = ref(null)
+    const activeTab    = ref('服务器')
+    const totalRequests = ref(0)
+
+    const sessions     = ref([])
+    const currentSessionId = ref('default')
+    const messageStore = ref({})   // session_id → messages[]
+    const servers      = ref([])
+    const tickets      = ref([])
+    const statsItems   = ref([])
+
+    // ── 当前消息列表 ─────────────────────────────────────
+    const currentMessages = computed(() =>
+      messageStore.value[currentSessionId.value] || []
+    )
+
+    // ── 快捷工具 ─────────────────────────────────────────
+    const quickTools = [
+      { icon: '🔍', label: '查询服务器状态',  prompt: '帮我查询 192.168.1.100 的实时状态' },
+      { icon: '📋', label: '查 CMDB 信息',    prompt: '查询 192.168.1.102 的资产信息和负责人' },
+      { icon: '🚨', label: '创建告警工单',    prompt: '服务器192.168.1.100 CPU持续告警，帮我创建P1工单' },
+      { icon: '📖', label: 'Redis 故障处理',  prompt: 'Redis 内存不足应该怎么处理？' },
+      { icon: '🗄️', label: 'MySQL 故障处理', prompt: 'MySQL 连接数耗尽了怎么解决？' },
+      { icon: '📊', label: '巡检规范查询',    prompt: '生产环境的巡检频率和告警阈值是多少？' },
+    ]
+
+    // ── 欢迎屏建议 ────────────────────────────────────────
+    const suggestions = [
+      { icon: '🚨', text: '192.168.1.100 CPU告警，帮我排查' },
+      { icon: '📖', text: 'Redis 内存不足怎么处理？' },
+      { icon: '🗄️', text: 'MySQL 慢查询如何排查？' },
+      { icon: '🔧', text: '对192.168.1.102执行一次巡检' },
+    ]
+
+    // ── 工具函数 ─────────────────────────────────────────
+    const now = () => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+
+    const scrollBottom = async () => {
+      await nextTick()
+      if (msgContainer.value)
+        msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+    }
+
+    const autoResize = () => {
+      if (!inputEl.value) return
+      inputEl.value.style.height = 'auto'
+      inputEl.value.style.height = Math.min(inputEl.value.scrollHeight, 140) + 'px'
+    }
+
+    // ── 健康检查 ─────────────────────────────────────────
+    const checkHealth = async () => {
+      checking.value = true
+      try {
+        const res = await fetch(`${API_BASE}/health`)
+        const data = await res.json()
+        apiStatus.value = data.status === 'ok' ? 'ok' : 'error'
+        totalRequests.value = data.request_count || 0
+      } catch {
+        apiStatus.value = 'error'
+      } finally {
+        checking.value = false
+      }
+    }
+
+    // ── 会话管理 ─────────────────────────────────────────
+    const newSession = () => {
+      const id   = 'session_' + Date.now()
+      const name = `会话 ${sessions.value.length + 1}`
+      sessions.value.unshift({ id, name, time: now() })
+      messageStore.value[id] = []
+      currentSessionId.value = id
+    }
+
+    const switchSession = (id) => {
+      currentSessionId.value = id
+    }
+
+    const clearSession = async () => {
+      messageStore.value[currentSessionId.value] = []
+      try {
+        await fetch(`${API_BASE}/session/${currentSessionId.value}`, { method: 'DELETE' })
+      } catch {}
+    }
+
+    // ── 发送消息 ─────────────────────────────────────────
+    const sendMessage = async () => {
+      const text = inputText.value.trim()
+      if (!text || loading.value) return
+
+      // 确保当前 session 存在
+      if (!messageStore.value[currentSessionId.value]) {
+        messageStore.value[currentSessionId.value] = []
+      }
+      if (!sessions.value.find(s => s.id === currentSessionId.value)) {
+        sessions.value.unshift({
+          id: currentSessionId.value,
+          name: text.slice(0, 16) + (text.length > 16 ? '...' : ''),
+          time: now()
+        })
+      }
+
+      // 添加用户消息
+      const msgs = messageStore.value[currentSessionId.value]
+      msgs.push({ role: 'user', content: text, time: now() })
+      inputText.value = ''
+      if (inputEl.value) inputEl.value.style.height = 'auto'
+      loading.value = true
+      await scrollBottom()
+
+      try {
+        const res  = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: currentSessionId.value,
+            message: text
+          })
+        })
+        const data = await res.json()
+
+        msgs.push({
+          role:    'ai',
+          content: data.message || '服务暂时不可用，请稍后重试',
+          time:    now(),
+          elapsed: data.elapsed_ms,
+          tools:   data.tools_used || []
+        })
+        totalRequests.value++
+
+        // 刷新右侧面板
+        if (activeTab.value === '工单') loadTickets()
+
+      } catch (e) {
+        msgs.push({
+          role:    'ai',
+          content: `⚠️ 请求失败：${e.message}\n请确认 FastAPI 服务已启动（${API_BASE}）`,
+          time:    now()
+        })
+      } finally {
+        loading.value = false
+        await scrollBottom()
+      }
+    }
+
+    const sendQuick = (prompt) => {
+      inputText.value = prompt
+      sendMessage()
+    }
+
+    // ── 右侧面板数据 ──────────────────────────────────────
+    const loadServers = async () => {
+      loadingServers.value = true
+      const ips = ['192.168.1.100', '192.168.1.101', '192.168.1.102']
+      const results = []
+      for (const ip of ips) {
+        try {
+          const res  = await fetch(`${API_BASE}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: 'panel_query', message: `查询服务器 ${ip} 状态，只返回JSON数字` })
+          })
+          // Mock数据（实际改为直接调 get_server_status 工具）
+          results.push({
+            ip,
+            cpu:    ip === '192.168.1.100' ? 92 : ip === '192.168.1.101' ? 35 : 15,
+            memory: ip === '192.168.1.100' ? 78 : ip === '192.168.1.101' ? 52 : 88,
+            disk:   ip === '192.168.1.100' ? 65 : ip === '192.168.1.101' ? 40 : 30,
+          })
+        } catch {
+          results.push({ ip, cpu: 0, memory: 0, disk: 0 })
+        }
+      }
+      servers.value = results
+      loadingServers.value = false
+    }
+
+    const loadTickets = async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/tickets?limit=10`)
+        const data = await res.json()
+        tickets.value = data.tickets || []
+      } catch {
+        tickets.value = []
+      }
+    }
+
+    const loadStats = async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/stats`)
+        const data = await res.json()
+        statsItems.value = [
+          { label: '运行时长（秒）',  value: data.uptime_seconds  || 0 },
+          { label: '累计请求数',      value: data.total_requests  || 0 },
+          { label: '活跃会话数',      value: data.active_sessions || 0 },
+          { label: '累计消息数',      value: data.total_messages  || 0 },
+        ]
+      } catch {
+        statsItems.value = []
+      }
+    }
+
+    // ── 初始化 ────────────────────────────────────────────
+    onMounted(async () => {
+      // 初始化默认 session
+      sessions.value.push({
+        id:   'default',
+        name: '默认会话',
+        time: now()
+      })
+      messageStore.value['default'] = []
+
+      await checkHealth()
+      await loadServers()
+
+      // 定时刷新服务器状态
+      setInterval(loadServers, 30000)
+      setInterval(checkHealth, 60000)
+    })
+
+    return {
+      apiStatus, checking, loading, loadingServers,
+      inputText, msgContainer, inputEl,
+      activeTab, totalRequests,
+      sessions, currentSessionId, currentMessages,
+      servers, tickets, statsItems,
+      quickTools, suggestions,
+      checkHealth, newSession, switchSession, clearSession,
+      sendMessage, sendQuick,
+      loadServers, loadTickets, loadStats,
+      autoResize,
+    }
+  }
+}).use(ElementPlus).mount('#app')
+</script>
+</body>
+</html>

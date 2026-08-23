@@ -1,0 +1,27 @@
+
+MySQL 故障处理手册
+
+1. MySQL 慢查询
+症状：接口响应慢、数据库CPU高
+处理步骤：
+  1) 开启慢查询日志：SET GLOBAL slow_query_log = ON
+  2) 分析慢查询：使用 pt-query-digest 工具
+  3) 执行 EXPLAIN 分析执行计划
+  4) 添加合适的索引
+预防措施：定期分析慢查询日志
+
+2. MySQL 主从同步中断
+症状：Slave_IO_Running 或 Slave_SQL_Running 为 No
+处理步骤：
+  1) SHOW SLAVE STATUS 查看错误信息
+  2) 如果是重复键错误：SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1
+  3) 执行 START SLAVE 重启同步
+预防措施：设置 expire_logs_days，监控同步延迟
+
+3. MySQL 连接数耗尽
+症状：Too many connections 错误
+处理步骤：
+  1) SHOW PROCESSLIST 查看当前连接
+  2) KILL 长时间未释放的连接
+  3) 修改 max_connections 参数
+预防措施：合理配置连接池大小

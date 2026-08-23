@@ -1,0 +1,77 @@
+{
+  "total": 6,
+  "results": [
+    {
+      "question": "Redis 内存不足应该怎么处理？",
+      "answer": "针对Redis内存不足的问题，可以按以下步骤处理：\n\n1. 首先执行 `INFO memory` 命令查看当前内存使用状况。\n2. 接着执行 `MEMORY DOCTOR` 获取系统给出的诊断建议。\n3. 将 `maxmemory-policy` 配置调整为 `allkeys-lru`，以启用内存淘汰策略。\n4. 若内存仍然紧张，可扩容，即修改 `maxmemory` 配置。\n\n此外，为预防此类问",
+      "scores": {
+        "faithfulness": 4,
+        "completeness": 4,
+        "clarity": 5,
+        "overall": 4,
+        "comment": "回答基本忠实于参考内容，并额外补充了MEMORY DOCTOR和定期清理无用键，但未明确提及参考中的'调整maxmemory-policy为allkeys-lru'是作为核心步骤，且'扩容修改maxmemory配置'表述略有偏差（应为修改maxmemory配置以扩容）。整体清晰完整，但略有超出参考范围的补充。"
+      }
+    },
+    {
+      "question": "MySQL 慢查询如何排查？",
+      "answer": "MySQL 慢查询的排查步骤如下：\n\n1. **开启慢查询日志**：先启用慢查询日志记录功能，以便捕获执行时间较长的SQL语句。\n2. **分析慢查询日志**：使用专业工具（如 pt-query-digest）对日志进行解析，找出耗时最长的查询语句。\n3. **查看执行计划**：对定位到的慢查询SQL执行 EXPLAIN，分析其执行计划，检查是否出现全表扫描、索引失效等问题。\n4. **优化索引*",
+      "scores": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "clarity": 5,
+        "overall": 5,
+        "comment": "回答完整准确地覆盖了参考中的所有排查步骤，并进行了适当扩展，逻辑清晰，表述专业，无遗漏或错误。"
+      }
+    },
+    {
+      "question": "生产环境服务器巡检频率是多少？",
+      "answer": "生产环境服务器需要每天执行一次全量巡检。",
+      "scores": {
+        "faithfulness": 5,
+        "completeness": 3,
+        "clarity": 5,
+        "overall": 4,
+        "comment": "回答准确反映了参考中生产环境每天全量巡检的要求，但未提及测试环境及重大变更后的巡检频率，完整性略有不足。"
+      }
+    },
+    {
+      "question": "CPU 告警阈值是多少？",
+      "answer": "CPU 告警阈值是 85%。",
+      "scores": {
+        "faithfulness": 5,
+        "completeness": 4,
+        "clarity": 5,
+        "overall": 5,
+        "comment": "回答准确且清晰，完全符合参考信息中的告警阈值，但未提及严重阈值，略有不足。"
+      }
+    },
+    {
+      "question": "Redis 连接数耗尽怎么解决？",
+      "answer": "当Redis连接数耗尽时，可以通过以下步骤解决：\n\n1. 先查看当前连接状态：检查当前连接数。\n2. 找出异常连接：列出所有客户端连接，定位占用连接数的异常来源。\n3. 关闭异常连接：对异常或无用的连接进行强制关闭。\n4. 调整连接上限：修改Redis的最大连接数配置。\n\n同时，为预防此类问题，建议使用连接池来管理连接，并为客户端设置合理的连接超时时间，避免连接长期占用。",
+      "scores": {
+        "faithfulness": 4,
+        "completeness": 4,
+        "clarity": 5,
+        "overall": 4,
+        "comment": "回答基本忠实于参考内容，步骤完整，但缺少具体命令名称（如INFO clients、CLIENT LIST、CLIENT KILL），且未提及maxclients配置的具体修改方式，略有简化。表达清晰，逻辑通顺。"
+      }
+    },
+    {
+      "question": "Python 如何爬取网页数据？",
+      "answer": "关于Python爬取网页数据的方法，现有资料中未提供相关信息。如需了解，建议参考Python官方文档或相关网络爬虫教程。",
+      "scores": {
+        "faithfulness": 5,
+        "completeness": 3,
+        "clarity": 5,
+        "overall": 4,
+        "comment": "回答忠实于知识库（未编造内容），但未提供任何实际爬取方法，完整性不足；表达清晰，但实用性有限。"
+      }
+    }
+  ],
+  "summary": {
+    "faithfulness": 4.67,
+    "completeness": 3.83,
+    "clarity": 5.0,
+    "overall": 4.33
+  }
+}

@@ -1,0 +1,17 @@
+MySQL 故障处理手册
+
+1. MySQL 慢查询
+症状：接口响应慢、CPU高
+处理步骤：
+  1) 开启慢查询日志
+  2) EXPLAIN 分析执行计划
+  3) 添加合适索引
+预防：定期分析慢查询日志
+
+2. MySQL 连接数耗尽
+症状：Too many connections
+处理步骤：
+  1) SHOW PROCESSLIST 查看连接
+  2) KILL 长时间未释放连接
+  3) 修改 max_connections
+预防：合理配置连接池
