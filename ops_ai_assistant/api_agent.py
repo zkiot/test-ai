@@ -176,23 +176,25 @@ SYSTEM_PROMPT = """你是一个专业的智能运维助手。
 原则：优先查实时数据，发现严重问题建议创建工单，回答简洁专业。"""
 
 
-def run_agent(messages: list) -> str:
+def run_agent(messages: list) -> (str, list):
     full_messages = [SystemMessage(content=SYSTEM_PROMPT)] + messages
+    tools_used = []
 
     for _ in range(6):
         response = app_state.llm_with_tools.invoke(full_messages)
         full_messages.append(response)
 
         if not response.tool_calls:
-            return response.content
+            return response.content, tools_used
 
         for tool_call in response.tool_calls:
             name   = tool_call["name"]
             args   = tool_call["args"]
             t_id   = tool_call["id"]
-
             if name in app_state.tool_map:
-                result = app_state.tool_map[name].invoke(args)
+                if name not in tools_used:
+                    tools_used.append(name)
+                    result = app_state.tool_map[name].invoke(args)
             else:
                 result = f"工具 {name} 不存在"
 
@@ -201,4 +203,4 @@ def run_agent(messages: list) -> str:
                 tool_call_id=t_id
             ))
 
-    return "已达到最大工具调用次数，请重新提问"
+    return "已达到最大工具调用次数，请重新提问",tools_used

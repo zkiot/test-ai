@@ -68,6 +68,7 @@ class ChatResponse(BaseModel):
     message: str
     elapsed_ms: int
     history_len: int
+    tools_used: List[str]
 
 
 class TicketListResponse(BaseModel):
@@ -103,13 +104,14 @@ async def chat(request: ChatRequest):
     history.append(HumanMessage(content=request.message))
 
     try:
-        response_text = run_agent(history)
+        response_text, tools_used = run_agent(history)
         history.append(AIMessage(content=response_text))
         return ChatResponse(
             session_id=sid,
             message=response_text,
             elapsed_ms=int((time.time() - start) * 1000),
-            history_len=len(history)
+            history_len=len(history),
+            tools_used=tools_used
         )
     except Exception as e:
         history.pop()
