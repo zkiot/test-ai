@@ -6,10 +6,23 @@ db = SessionLocal()
 
 try:
     result = db.execute(
-        text("SELECT 1")
+        text("""
+            SELECT
+                order_no,
+                product_name,
+                status,
+                tracking_no
+            FROM orders
+            WHERE order_no = :order_id
+        """),
+        {
+            "order_id": "10001"
+        }
     )
 
-    print(result.fetchone())
+    order = result.fetchone()
+
+    print(order)
 
 finally:
     db.close()
