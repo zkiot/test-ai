@@ -5,3 +5,8 @@ mcp
 langchain-openai
 sqlalchemy
 pymysql
+python-dotenv
+langchain-chroma
+chromadb
+sentence-transformers
+langchain_huggingface
