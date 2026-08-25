@@ -1,0 +1,7 @@
+langchain
+langgraph
+langchain-mcp-adapters
+mcp
+langchain-openai
+sqlalchemy
+pymysql
